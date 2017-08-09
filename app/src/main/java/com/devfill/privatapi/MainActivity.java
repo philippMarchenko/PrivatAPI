@@ -19,6 +19,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.simplexml.SimpleXmlConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -56,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
                         Retrofit retrofit = new Retrofit.Builder()
                                 .client(client)
                                 .baseUrl("http://api.mkdeveloper.ru")
-                                .addConverterFactory(GsonConverterFactory.create(gson))
+                                //.addConverterFactory(GsonConverterFactory.create(gson))
+                                .addConverterFactory(SimpleXmlConverterFactory.create())
                                 .build();
 
                         CardInfoAPI cardInfoAPI = retrofit.create(CardInfoAPI.class);
