@@ -1,6 +1,6 @@
 package com.devfill.privatapi.CardInfoJSON;
 
-public class CardInfo {
+public class CardInfoRequest {
 
     public Data data;
 

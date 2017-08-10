@@ -37,5 +37,8 @@ dependencies {
         exclude module: 'stax'
         exclude module: 'xpp3'
     }
-
+    compile 'com.android.support:design:25.1.0'
+    compile 'com.mikepenz.materialdrawer:library:2.9.2@aar'
+    compile 'com.android.support:recyclerview-v7:23.1.1'
+    compile 'com.android.support:cardview-v7:23.3.+'
 }
