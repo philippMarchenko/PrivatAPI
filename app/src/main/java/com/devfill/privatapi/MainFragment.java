@@ -1,5 +1,6 @@
 package com.devfill.privatapi;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -8,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -131,79 +134,106 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
     }
 
     public void updateCardInfo(Privat24API privat24API) {
-        try {
+        String netType = getNetworkType(getContext());
+        if(netType == null)
+            Toast.makeText(getActivity(), "Подключение к сети отсутствует!", Toast.LENGTH_LONG).show();
+        else {
+            try {
 
 
-            privat24API.getCardInfo("balance_card").enqueue(new Callback<CardInfoXML>() {
-                @Override
-                public void onResponse(Call<CardInfoXML> call, Response<CardInfoXML> response) {
+                privat24API.getCardInfo("balance_card").enqueue(new Callback<CardInfoXML>() {
+                    @Override
+                    public void onResponse(Call<CardInfoXML> call, Response<CardInfoXML> response) {
 
-                    String balance = response.body().getData().getInfo().getCardbalance().getBalance();
+                        String balance = response.body().getData().getInfo().getCardbalance().getBalance();
 
-                    myBlance.setText("₴ " + balance);
-                    progressUpdate.setVisibility(View.INVISIBLE);
-                    updateButton.setVisibility(View.VISIBLE);
-                    //  Log.i(LOG_TAG,"onResponse getAccName " + response.body().getAccName() + "\n");
-                    // Log.i(LOG_TAG,"onResponse getAccType " + response.body().getCardNumber() + "\n");
-                    // Log.i(LOG_TAG,"onResponse getBalDate " + response.body().getBalDate() + "\n");
-                    // Log.i(LOG_TAG,"onResponse getCurrency " + response.body().getCurrency() + "\n");
+                        myBlance.setText("₴ " + balance);
+                        progressUpdate.setVisibility(View.INVISIBLE);
+                        updateButton.setVisibility(View.VISIBLE);
+                        //  Log.i(LOG_TAG,"onResponse getAccName " + response.body().getAccName() + "\n");
+                        // Log.i(LOG_TAG,"onResponse getAccType " + response.body().getCardNumber() + "\n");
+                        // Log.i(LOG_TAG,"onResponse getBalDate " + response.body().getBalDate() + "\n");
+                        // Log.i(LOG_TAG,"onResponse getCurrency " + response.body().getCurrency() + "\n");
 
-                }
-
-                @Override
-                public void onFailure(Call<CardInfoXML> call, Throwable t) {
-                    Log.i(LOG_TAG, "onResponse getBalance " + call.toString() + "\n");
-                    Log.i(LOG_TAG, "onFailure. Ошибка REST запроса getBalance " + t.getMessage());
-
-                    try {
-                        Toast.makeText(getContext(), "Произошла ошибка запроса! " + t.getMessage(), Toast.LENGTH_LONG).show();
-                    } catch (Exception e) {
-                        Log.i(LOG_TAG, "Не удалось вывести на экран сообщение! " + e.getMessage());
                     }
-                    progressUpdate.setVisibility(View.INVISIBLE);
-                    updateButton.setVisibility(View.VISIBLE);
-                }
-            });
-        } catch (Exception e) {
 
-            Log.i(LOG_TAG, "Ошибка REST запроса к серверу  getBalance " + e.getMessage());
+                    @Override
+                    public void onFailure(Call<CardInfoXML> call, Throwable t) {
+                        Log.i(LOG_TAG, "onResponse getBalance " + call.toString() + "\n");
+                        Log.i(LOG_TAG, "onFailure. Ошибка REST запроса getBalance " + t.getMessage());
+
+                        try {
+                            Toast.makeText(getContext(), "Произошла ошибка запроса! " + t.getMessage(), Toast.LENGTH_LONG).show();
+                        } catch (Exception e) {
+                            Log.i(LOG_TAG, "Не удалось вывести на экран сообщение! " + e.getMessage());
+                        }
+                        progressUpdate.setVisibility(View.INVISIBLE);
+                        updateButton.setVisibility(View.VISIBLE);
+                    }
+                });
+            } catch (Exception e) {
+
+                Log.i(LOG_TAG, "Ошибка REST запроса к серверу  getBalance " + e.getMessage());
+            }
         }
     }
-
+    public String getNetworkType(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork != null) {
+            return activeNetwork.getTypeName();
+        }
+        return null;
+    }
     public void sendPayPhoneRequest(Privat24API privat24API, String amt) {
-        try {
+        String netType = getNetworkType(getContext());
+
+        if(netType == null)
+            Toast.makeText(getActivity(), "Подключение к сети отсутствует!", Toast.LENGTH_LONG).show();
+        else {
+
+            try {
 
 
-            privat24API.sendPayPhone("pay_phone_balance", amt).enqueue(new Callback<PayPhoneResponse>() {
-                @Override
-                public void onResponse(Call<PayPhoneResponse> call, Response<PayPhoneResponse> response) {
+                privat24API.sendPayPhone("pay_phone_balance", amt).enqueue(new Callback<PayPhoneResponse>() {
+                    @Override
+                    public void onResponse(Call<PayPhoneResponse> call, Response<PayPhoneResponse> response) {
 
-                    Toast.makeText(getContext(), "Успешное проведение платежа! Комиссия " + response.body().getData().getPayment().getComis(), Toast.LENGTH_LONG).show();
-
-
-                    // Log.i(LOG_TAG,"onResponse getAccName " + response.body(). + "\n");
-                    // Log.i(LOG_TAG,"onResponse getAccType " + response.body().getCardNumber() + "\n");
-                    // Log.i(LOG_TAG,"onResponse getBalDate " + response.body().getBalDate() + "\n");
-                    // Log.i(LOG_TAG,"onResponse getCurrency " + response.body().getCurrency() + "\n");
-
-                }
-
-                @Override
-                public void onFailure(Call<PayPhoneResponse> call, Throwable t) {
-
-                    Toast.makeText(getContext(), "Неудалось совершить платеж! ", Toast.LENGTH_LONG).show();
-
-                    Log.i(LOG_TAG, "onFailure. Ошибка REST запроса getBalance " + t.getMessage());
+                        PayPhoneResponse payPhoneResponse = response.body();
 
 
-                }
-            });
-        } catch (Exception e) {
+                        if (payPhoneResponse.getData().getPayment().getState().equals("1")) {
+                            Toast.makeText(getContext(), "Успешное проведение платежа! Комиссия " + response.body().getData().getPayment().getComis(), Toast.LENGTH_LONG).show();
+                        } else {
+                            String message = payPhoneResponse.getData().getPayment().getMessage();
+                            Toast.makeText(getContext(), "Ошибка проведения платежа: " + message, Toast.LENGTH_LONG).show();
+                        }
 
-            Log.i(LOG_TAG, "Ошибка REST запроса к серверу  getBalance " + e.getMessage());
+
+                        // Log.i(LOG_TAG,"onResponse getAccName " + response.body(). + "\n");
+                        // Log.i(LOG_TAG,"onResponse getAccType " + response.body().getCardNumber() + "\n");
+                        // Log.i(LOG_TAG,"onResponse getBalDate " + response.body().getBalDate() + "\n");
+                        // Log.i(LOG_TAG,"onResponse getCurrency " + response.body().getCurrency() + "\n");
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<PayPhoneResponse> call, Throwable t) {
+
+                        Toast.makeText(getContext(), "Неудалось совершить платеж! ", Toast.LENGTH_LONG).show();
+
+                        Log.i(LOG_TAG, "onFailure. Ошибка REST запроса getBalance " + t.getMessage());
+
+
+                    }
+                });
+            } catch (Exception e) {
+
+                Log.i(LOG_TAG, "Ошибка REST запроса к серверу  getBalance " + e.getMessage());
+            }
         }
     }
-
     public void initReminderList() {
 
         PayPhone payPhone;
@@ -236,7 +266,6 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
         payPhoneAdapter.notifyDataSetChanged();
 
     }
-
     public void onClickPay(int position) {
 
         final int pos = position;
@@ -251,7 +280,7 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        sendPayPhoneRequest(privat24API, payPhoneList.get(pos).getAmt());
+                            sendPayPhoneRequest(privat24API, payPhoneList.get(pos).getAmt());
                     }
                 });
 
@@ -271,7 +300,6 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
 
     }
-
     public void deleteItemFromDB(int position) {
 
         Log.d(LOG_TAG_DB, "deleteItemFromDB  position " + position);
@@ -310,7 +338,6 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
         c.close();
         dbHelper.close();
     }
-
     private void setUpItemTouchHelper() {
 
         ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
