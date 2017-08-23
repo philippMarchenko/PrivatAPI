@@ -81,13 +81,13 @@
     <Button
         android:text="Выбрать из списка"
         android:textAllCaps="false"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:id="@+id/chooseInCotact"
         android:textColor="@color/md_yellow_300"
         android:theme="@style/MyButton"
         android:layout_below="@+id/setRouteId"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:layout_width="160dp"
+        android:layout_height="40dp" />
 
     <Button
         android:text="10 грн"
@@ -100,5 +100,16 @@
         android:layout_marginTop="5dp"
         android:layout_below="@+id/setDurationView"
         android:layout_alignStart="@+id/setNumber" />
+
+    <Button
+        android:text="Отменить выбор"
+        android:textAllCaps="false"
+        android:layout_width="160dp"
+        android:layout_height="40dp"
+        android:id="@+id/cancelChoose"
+        android:textColor="@color/md_yellow_300"
+        android:theme="@style/MyButton"
+        android:layout_below="@+id/setRouteId"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>

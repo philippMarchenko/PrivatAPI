@@ -65,7 +65,7 @@ public class AddPayPhoneFragment extends Fragment {
     ContentResolver resolver;
     ContactsListAdapter contactsListAdapter;
 
-    Button chooseInCotact,okContact;
+    Button chooseInCotact,okContact,cancelChoose;
 
     public AddPayPhoneFragment(){};
 
@@ -83,6 +83,7 @@ public class AddPayPhoneFragment extends Fragment {
         chooseInCotact = (Button) rootView.findViewById(R.id.chooseInCotact);
         okContact = (Button) rootView.findViewById(R.id.okContact);
         setAmt = (Button) rootView.findViewById(R.id.setAmt);
+        cancelChoose = (Button) rootView.findViewById(R.id.cancelChoose);
         setNumber = (EditText) rootView.findViewById(R.id.setNumber);
 
         selectUsers = new ArrayList<ContactsList>();
@@ -91,6 +92,7 @@ public class AddPayPhoneFragment extends Fragment {
 
         listView.setVisibility(View.INVISIBLE);
         okContact.setVisibility(View.INVISIBLE);
+        cancelChoose.setVisibility(View.INVISIBLE);
 
         chooseInCotact.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,6 +100,8 @@ public class AddPayPhoneFragment extends Fragment {
                 listView.setVisibility(View.VISIBLE);
                 okContact.setVisibility(View.VISIBLE);
                 savePayPhone.setVisibility(View.INVISIBLE);
+                chooseInCotact.setVisibility(View.INVISIBLE);
+                cancelChoose.setVisibility(View.VISIBLE);
             }
         });
 
@@ -108,7 +112,19 @@ public class AddPayPhoneFragment extends Fragment {
                 listView.setVisibility(View.INVISIBLE);
                 okContact.setVisibility(View.INVISIBLE);
                 savePayPhone.setVisibility(View.VISIBLE);
+                chooseInCotact.setVisibility(View.VISIBLE);
 
+            }
+        });
+
+        cancelChoose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                savePayPhone.setVisibility(View.VISIBLE);
+                cancelChoose.setVisibility(View.INVISIBLE);
+                listView.setVisibility(View.INVISIBLE);
+                okContact.setVisibility(View.INVISIBLE);
+                chooseInCotact.setVisibility(View.VISIBLE);
             }
         });
 

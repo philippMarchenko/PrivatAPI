@@ -1,5 +1,6 @@
 package com.devfill.privatapi;
 
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
@@ -12,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -237,7 +239,36 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
     public void onClickPay(int position) {
 
-        sendPayPhoneRequest(privat24API, payPhoneList.get(position).getAmt());
+        final int pos = position;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(),R.style.MyDialogTheme);
+        builder.setTitle("Внимание!");
+        builder.setMessage("Вы действительно хотите совершить платеж на номер " + payPhoneList.get(position).getName() + ", " +
+               payPhoneList.get(position).getNumber() + " на сумму " + payPhoneList.get(position).getAmt() + " ?");
+
+        String positiveText = getString(android.R.string.ok);
+        builder.setPositiveButton(positiveText,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        sendPayPhoneRequest(privat24API, payPhoneList.get(pos).getAmt());
+                    }
+                });
+
+        String negativeText = getString(android.R.string.cancel);
+        builder.setNegativeButton(negativeText,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // negative button logic
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        // display dialog
+        dialog.show();
+
+
 
     }
 
@@ -446,11 +477,6 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
         });
     }
-
-
-
-
-
 
     @Override
     public void onResume() {
