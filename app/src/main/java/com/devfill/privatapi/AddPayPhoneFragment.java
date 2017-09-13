@@ -1,9 +1,11 @@
 package com.devfill.privatapi;
 
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -13,6 +15,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
@@ -37,7 +40,7 @@ import biz.kasual.materialnumberpicker.MaterialNumberPicker;
 
 public class AddPayPhoneFragment extends Fragment {
 
-    EditText setNumber;
+    EditText setNumber,setName;
     String strSpin;
     String strEt;
     Button savePayPhone,setAmt;
@@ -54,7 +57,6 @@ public class AddPayPhoneFragment extends Fragment {
 
     public static final String LOG_TAG_DB = "AddPayPhoneLogs";
 
-    // ArrayList
     ArrayList<ContactsList> selectUsers;
     List<ContactsList> temp;
     // Contact List
@@ -85,6 +87,7 @@ public class AddPayPhoneFragment extends Fragment {
         setAmt = (Button) rootView.findViewById(R.id.setAmt);
         cancelChoose = (Button) rootView.findViewById(R.id.cancelChoose);
         setNumber = (EditText) rootView.findViewById(R.id.setNumber);
+        setName = (EditText) rootView.findViewById(R.id.setName);
 
         selectUsers = new ArrayList<ContactsList>();
         resolver = getContext().getContentResolver();
@@ -137,25 +140,17 @@ public class AddPayPhoneFragment extends Fragment {
 
                 if(name == null)
                     name = "Без имени";
+                if(setNumber.getText() != null){
+                    number = setNumber.getText().toString();
+                }
+                if(setName.getText() != null){
+                    name = setName.getText().toString();
+                }
+
 
                 savePayPhone(name,number,amt);
             }
         });
-
-        setNumber.setOnKeyListener(new View.OnKeyListener()
-                                            {
-                                                public boolean onKey(View v, int keyCode, KeyEvent event)
-                                                {
-                                                    if(event.getAction() == KeyEvent.ACTION_DOWN &&
-                                                            (keyCode == KeyEvent.KEYCODE_ENTER))
-                                                    {
-                                                        number = setNumber.getText().toString();
-                                                        return true;
-                                                    }
-                                                    return false;
-                                                }
-                                            }
-        );
 
         setAmt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -184,6 +179,7 @@ public class AddPayPhoneFragment extends Fragment {
                         return value + " грн";
                     }
                 });
+
                 picker = numberPickerBuilder.build();
                 picker.setValue(10);
 
@@ -203,9 +199,12 @@ public class AddPayPhoneFragment extends Fragment {
             }
         });
 
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getActivity(), "У приложения нет необходимого разрешения.", Toast.LENGTH_LONG).show();
 
-        initContactList(rootView);
-
+        }else{
+            initContactList(rootView);
+        }
         return rootView;
 
     }
@@ -245,8 +244,6 @@ public class AddPayPhoneFragment extends Fragment {
     }
 
     private void initContactList(View view) {
-
-
 
         phones = getContext().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
         LoadContact loadContact = new LoadContact();

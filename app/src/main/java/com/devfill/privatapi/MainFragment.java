@@ -1,7 +1,10 @@
 package com.devfill.privatapi;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
@@ -13,6 +16,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
@@ -21,6 +25,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,9 +36,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.devfill.privatapi.CardInfoXML.CardInfoXML;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,8 +72,12 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
     private RecyclerView recyclerView;
     private List<PayPhone> payPhoneList = new ArrayList<>();
 
-    Privat24API privat24API;
+    Privat24API privat24Api;
 
+    private static final int READ_CONTACTS_PERMISSION_CONSTANT = 100;
+    private static final int REQUEST_PERMISSION_SETTING = 101;
+    private boolean sentToSettings = false;
+    private SharedPreferences permissionStatus;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootview = inflater.inflate(R.layout.main_fragment, container, false);
@@ -80,7 +94,7 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
         recyclerView.setAdapter(payPhoneAdapter);
 
         setUpItemTouchHelper();
-        //  setUpAnimationDecoratorHelper();
+       // setUpAnimationDecoratorHelper();
 
         myBlance = (TextView) rootview.findViewById(R.id.myBalance);
         updateButton = (ImageView) rootview.findViewById(R.id.updateButton);
@@ -102,14 +116,18 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
                 .addConverterFactory(SimpleXmlConverterFactory.create())
                 .build();
 
-        privat24API = retrofit.create(Privat24API.class);
 
-        updateCardInfo(privat24API);
+
+
+        privat24Api = retrofit.create(Privat24API.class);
+
+
+        updateCardInfo(privat24Api);
 
         updateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateCardInfo(privat24API);
+                updateCardInfo(privat24Api);
                 progressUpdate.setVisibility(View.VISIBLE);
                 updateButton.setVisibility(View.INVISIBLE);
 
@@ -130,9 +148,95 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
         initReminderList();
 
+        showQueryPremission();
+
+
+
         return rootview;
     }
 
+    public void showQueryPremission(){
+
+        permissionStatus = getContext().getSharedPreferences("permissionStatus",getActivity().MODE_PRIVATE);
+
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_CONTACTS)) {
+                //Show Information about why you need the permission
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle("Необходимо разрешение!");
+                builder.setMessage("Этому приложению необходимо разрешениена просмотр контактов");
+                builder.setPositiveButton("Запрсить!", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_CONTACTS}, READ_CONTACTS_PERMISSION_CONSTANT);
+                    }
+                });
+                builder.setNegativeButton("Отмена!", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
+            }
+            else {
+                //just request the permission
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_CONTACTS}, READ_CONTACTS_PERMISSION_CONSTANT);
+            }
+            SharedPreferences.Editor editor = permissionStatus.edit();
+            editor.putBoolean(Manifest.permission.READ_CONTACTS,true);
+            editor.commit();
+        }
+        else {
+            //You already have the permission, just go ahead.
+            proceedAfterPermission();
+        }
+
+
+      /*  @Override
+        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            if (requestCode == EXTERNAL_STORAGE_PERMISSION_CONSTANT) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //The External Storage Write Permission is granted to you... Continue your left job...
+                    proceedAfterPermission();
+                } else {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        //Show Information about why you need the permission
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setTitle("Need Storage Permission");
+                        builder.setMessage("This app needs storage permission");
+                        builder.setPositiveButton("Grant", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+
+
+                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, EXTERNAL_STORAGE_PERMISSION_CONSTANT);
+
+
+                            }
+                        });
+                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
+                        builder.show();
+                    } else {
+                        Toast.makeText(getBaseContext(),"Unable to get Permission",Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        }
+*/
+    }
+    private void proceedAfterPermission() {
+        //We've got the permission, now we can proceed further
+       // Toast.makeText(getContext(), "У нас есть разрешение!", Toast.LENGTH_LONG).show();
+    }
     public void updateCardInfo(Privat24API privat24API) {
         String netType = getNetworkType(getContext());
         if(netType == null)
@@ -186,8 +290,10 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
         }
         return null;
     }
-    public void sendPayPhoneRequest(Privat24API privat24API, String amt) {
+    public void sendPayPhoneRequest(Privat24API privat24API, String phone,String amt) {
         String netType = getNetworkType(getContext());
+
+        String amtNumber = amt.replaceAll("[^0-9]+", "");   //обрежем само число в сумме
 
         if(netType == null)
             Toast.makeText(getActivity(), "Подключение к сети отсутствует!", Toast.LENGTH_LONG).show();
@@ -195,8 +301,7 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
             try {
 
-
-                privat24API.sendPayPhone("pay_phone_balance", amt).enqueue(new Callback<PayPhoneResponse>() {
+                privat24API.sendPayPhoneToMyServer("pay_phone_balance",phone, amtNumber).enqueue(new Callback<PayPhoneResponse>() {
                     @Override
                     public void onResponse(Call<PayPhoneResponse> call, Response<PayPhoneResponse> response) {
 
@@ -210,12 +315,6 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
                             Toast.makeText(getContext(), "Ошибка проведения платежа: " + message, Toast.LENGTH_LONG).show();
                         }
 
-
-                        // Log.i(LOG_TAG,"onResponse getAccName " + response.body(). + "\n");
-                        // Log.i(LOG_TAG,"onResponse getAccType " + response.body().getCardNumber() + "\n");
-                        // Log.i(LOG_TAG,"onResponse getBalDate " + response.body().getBalDate() + "\n");
-                        // Log.i(LOG_TAG,"onResponse getCurrency " + response.body().getCurrency() + "\n");
-
                     }
 
                     @Override
@@ -223,14 +322,15 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
                         Toast.makeText(getContext(), "Неудалось совершить платеж! ", Toast.LENGTH_LONG).show();
 
-                        Log.i(LOG_TAG, "onFailure. Ошибка REST запроса getBalance " + t.getMessage());
+                        Log.i(LOG_TAG, "onFailure. Ошибка REST запроса sendPayPhoneToMyServer " + t.getMessage());
 
 
                     }
                 });
+
             } catch (Exception e) {
 
-                Log.i(LOG_TAG, "Ошибка REST запроса к серверу  getBalance " + e.getMessage());
+                Log.i(LOG_TAG, "Ошибка REST запроса к серверу  sendPayPhoneToMyServer " + e.getMessage());
             }
         }
     }
@@ -280,7 +380,7 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                            sendPayPhoneRequest(privat24API, payPhoneList.get(pos).getAmt());
+                            sendPayPhoneRequest(privat24Api, payPhoneList.get(pos).getNumber(),payPhoneList.get(pos).getAmt());
                     }
                 });
 
@@ -342,21 +442,6 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
         ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
 
-            // we want to cache these and not allocate anything repeatedly in the onChildDraw method
-            Drawable background;
-            Drawable xMark;
-            int xMarkMargin;
-            boolean initiated;
-
-            private void init() {
-                background = new ColorDrawable(Color.RED);
-                xMark = ContextCompat.getDrawable(getContext(), R.drawable.ic_clear_24dp);
-                xMark.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-                xMarkMargin = (int) getContext().getResources().getDimension(R.dimen.ic_clear_margin);
-                initiated = true;
-            }
-
-            // not important, we don't want drag & drop
             @Override
             public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
                 return false;
@@ -385,124 +470,9 @@ public class MainFragment extends Fragment implements PayPhoneAdapter.IPayPhoneL
 
                 }
             }
-
-            @Override
-            public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                View itemView = viewHolder.itemView;
-
-                // not sure why, but this method get's called for viewholder that are already swiped away
-                if (viewHolder.getAdapterPosition() == -1) {
-                    // not interested in those
-                    return;
-                }
-
-                if (!initiated) {
-                    init();
-                }
-
-                // draw red background
-                background.setBounds(itemView.getRight() + (int) dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
-                background.draw(c);
-
-                // draw x mark
-                int itemHeight = itemView.getBottom() - itemView.getTop();
-                int intrinsicWidth = xMark.getIntrinsicWidth();
-                int intrinsicHeight = xMark.getIntrinsicWidth();
-
-                int xMarkLeft = itemView.getRight() - xMarkMargin - intrinsicWidth;
-                int xMarkRight = itemView.getRight() - xMarkMargin;
-                int xMarkTop = itemView.getTop() + (itemHeight - intrinsicHeight) / 2;
-                int xMarkBottom = xMarkTop + intrinsicHeight;
-                xMark.setBounds(xMarkLeft, xMarkTop, xMarkRight, xMarkBottom);
-
-                xMark.draw(c);
-
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-            }
-
         };
         ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
         mItemTouchHelper.attachToRecyclerView(recyclerView);
-    }
-
-    private void setUpAnimationDecoratorHelper() {
-        recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
-
-            // we want to cache this and not allocate anything repeatedly in the onDraw method
-            Drawable background;
-            boolean initiated;
-
-            private void init() {
-                background = new ColorDrawable(Color.RED);
-                initiated = true;
-            }
-
-            @Override
-            public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-
-                if (!initiated) {
-                    init();
-                }
-
-                // only if animation is in progress
-                if (parent.getItemAnimator().isRunning()) {
-
-                    // some items might be animating down and some items might be animating up to close the gap left by the removed item
-                    // this is not exclusive, both movement can be happening at the same time
-                    // to reproduce this leave just enough items so the first one and the last one would be just a little off screen
-                    // then remove one from the middle
-
-                    // find first child with translationY > 0
-                    // and last one with translationY < 0
-                    // we're after a rect that is not covered in recycler-view views at this point in time
-                    View lastViewComingDown = null;
-                    View firstViewComingUp = null;
-
-                    // this is fixed
-                    int left = 0;
-                    int right = parent.getWidth();
-
-                    // this we need to find out
-                    int top = 0;
-                    int bottom = 0;
-
-                    // find relevant translating views
-                    int childCount = parent.getLayoutManager().getChildCount();
-                    for (int i = 0; i < childCount; i++) {
-                        View child = parent.getLayoutManager().getChildAt(i);
-                        if (child.getTranslationY() < 0) {
-                            // view is coming down
-                            lastViewComingDown = child;
-                        } else if (child.getTranslationY() > 0) {
-                            // view is coming up
-                            if (firstViewComingUp == null) {
-                                firstViewComingUp = child;
-                            }
-                        }
-                    }
-
-                    if (lastViewComingDown != null && firstViewComingUp != null) {
-                        // views are coming down AND going up to fill the void
-                        top = lastViewComingDown.getBottom() + (int) lastViewComingDown.getTranslationY();
-                        bottom = firstViewComingUp.getTop() + (int) firstViewComingUp.getTranslationY();
-                    } else if (lastViewComingDown != null) {
-                        // views are going down to fill the void
-                        top = lastViewComingDown.getBottom() + (int) lastViewComingDown.getTranslationY();
-                        bottom = lastViewComingDown.getBottom();
-                    } else if (firstViewComingUp != null) {
-                        // views are coming up to fill the void
-                        top = firstViewComingUp.getTop();
-                        bottom = firstViewComingUp.getTop() + (int) firstViewComingUp.getTranslationY();
-                    }
-
-                    background.setBounds(left, top, right, bottom);
-                    background.draw(c);
-
-                }
-                super.onDraw(c, parent, state);
-            }
-
-        });
     }
 
     @Override

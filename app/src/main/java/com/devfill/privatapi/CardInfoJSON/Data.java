@@ -10,6 +10,6 @@ public class Data {
     public String oper;
     @SerializedName("info")
     @Expose
-    public Info info;
+    public com.devfill.privatapi.CardInfoJSON.Info info;
 
 }

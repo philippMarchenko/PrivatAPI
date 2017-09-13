@@ -12,13 +12,12 @@
     android:background="@drawable/phone"
     tools:context="com.devfill.privatapi.MainActivity">
 
-    <com.devfill.privatapi.CustomFontsTextView
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Мой баланс"
         android:elevation="1dp"
         android:id="@+id/tv"
-        app:fonts="font1"
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
         android:layout_marginTop="70dp"
@@ -27,13 +26,12 @@
         android:layout_centerHorizontal="true"
         android:textColor="@color/colorPrimaryLight" />
 
-    <com.devfill.privatapi.CustomFontsTextView
+    <TextView
         android:text="₴ 125.2 "
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="17dp"
         android:id="@+id/myBalance"
-        app:fonts="font2"
         android:textSize="36sp"
         android:layout_below="@+id/tv"
         android:layout_centerHorizontal="true"

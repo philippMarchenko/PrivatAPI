@@ -20,17 +20,6 @@
         android:layout_width="wrap_content" />
 
     <TextView
-        android:id="@+id/setDurationView"
-        android:textColor="@color/colorPrimary"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Укажите сумму"
-        android:textSize="24sp"
-        android:layout_below="@+id/setRouteId"
-        android:layout_alignLeft="@+id/setRouteId"
-        android:layout_marginTop="55dp" />
-
-    <TextView
         android:id="@+id/setRouteId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -55,17 +44,36 @@
         android:textColor="@color/md_yellow_300"
         android:layout_marginStart="5dp"
         android:textSize="14sp"
-        android:layout_width="225dp" />
+        android:layout_width="225dp"
+        android:layout_alignEnd="@+id/setRouteId"
+        android:layout_marginEnd="18dp" />
+
+    <EditText
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:ems="10"
+        android:id="@+id/setName"
+        android:hint="Ведите имя"
+        android:layout_below="@+id/setNumber"
+        android:layout_alignStart="@+id/setRouteId"
+        android:layout_marginTop="5dp"
+        android:textColorHint="@color/md_yellow_300"
+        android:textColor="@color/md_yellow_300"
+        android:layout_marginStart="5dp"
+        android:textSize="14sp"
+        android:layout_width="225dp"
+        android:layout_alignEnd="@+id/setRouteId"
+        android:layout_marginEnd="18dp" />
 
     <ListView
         android:layout_width="match_parent"
         android:textColor="@color/md_yellow_300"
         android:id="@+id/contacts_list"
-        android:layout_above="@+id/savePayPhone"
         android:layout_alignStart="@+id/setDurationView"
-        android:layout_marginBottom="55dp"
+        android:layout_marginBottom="43dp"
         android:layout_height="270dp"
-        android:layout_below="@+id/setAmt"/>
+        android:layout_below="@+id/setAmt"
+        android:layout_above="@+id/savePayPhone" />
 
     <Button
         android:text="Выбрать"
@@ -90,18 +98,6 @@
         android:layout_height="40dp" />
 
     <Button
-        android:text="10 грн"
-        android:textAllCaps="false"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/setAmt"
-        android:textColor="@color/md_yellow_300"
-        android:theme="@style/MyButton"
-        android:layout_marginTop="5dp"
-        android:layout_below="@+id/setDurationView"
-        android:layout_alignStart="@+id/setNumber" />
-
-    <Button
         android:text="Отменить выбор"
         android:textAllCaps="false"
         android:layout_width="160dp"
@@ -109,7 +105,29 @@
         android:id="@+id/cancelChoose"
         android:textColor="@color/md_yellow_300"
         android:theme="@style/MyButton"
-        android:layout_below="@+id/setRouteId"
+        android:layout_alignBottom="@+id/setNumber"
         android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:id="@+id/setDurationView"
+        android:textColor="@color/colorPrimary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Укажите сумму"
+        android:textSize="24sp"
+        android:layout_marginTop="56dp"
+        android:layout_below="@+id/setNumber"
+        android:layout_alignStart="@+id/setRouteId" />
+
+    <Button
+        android:text="10 грн"
+        android:textAllCaps="false"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/setAmt"
+        android:textColor="@color/md_yellow_300"
+        android:theme="@style/MyButton"
+        android:layout_below="@+id/setDurationView"
+        android:layout_alignStart="@+id/setName" />
 
 </RelativeLayout>
